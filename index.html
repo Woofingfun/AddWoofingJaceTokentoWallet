@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add WoofingJace Token to Wallet</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://woofingjace.com/images/jace.png" type="image/x-icon">
+    <link href='https://fonts.googleapis.com/css2?family=VT323&display=swap' rel='stylesheet'>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding-bottom: 60px; /* Space for fixed footer */
+            font-family: 'VT323', monospace;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #00ffcc;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        h2 {
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff007f;
+            margin: 20px;
+        }
+        .wallet-info {
+            font-size: 1.2em;
+            text-shadow: 0 0 5px #00ffcc;
+            margin: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffcc;
+            border-radius: 10px;
+            max-width: 90%;
+        }
+        .token-list {
+            width: 600px;
+            max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 10px;
+        }
+        .token-row {
+            display: grid;
+            grid-template-columns: 60px 100px 300px 80px 120px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px;
+            border: 2px solid #ff007f;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #ff007f;
+            transition: transform 0.2s ease;
+        }
+        .token-row:hover {
+            transform: scale(1.05);
+        }
+        .token-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 1px solid #00ffcc;
+        }
+        .token-symbol {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        .token-address {
+            font-size: 1em;
+            color: #ff007f;
+            word-break: break-all;
+            text-shadow: 0 0 5px #ff007f;
+        }
+        .token-decimals {
+            font-size: 1em;
+            color: #00ffcc;
+            text-align: center;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+        .add-button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background: #ff007f;
+            color: #00ffcc;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'VT323', monospace;
+            box-shadow: 0 0 10px #ff007f;
+            transition: all 0.3s ease;
+        }
+        .add-button:hover {
+            background: #00ffcc;
+            color: #ff007f;
+            box-shadow: 0 0 15px #00ffcc;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffcc;
+            font-size: 1em;
+            text-shadow: 0 0 5px #00ffcc;
+            z-index: 1000;
+        }
+        footer a {
+            color: #ff007f;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 620px) {
+            .token-list {
+                width: 90%;
+            }
+            .token-row {
+                grid-template-columns: 50px 80px 1fr 60px 100px;
+                font-size: 0.9em;
+                padding: 8px;
+            }
+            .token-logo {
+                width: 30px;
+                height: 30px;
+            }
+            .add-button {
+                padding: 6px 12px;
+                font-size: 1em;
+            }
+            h2 {
+                font-size: 1.8em;
+                margin: 15px;
+            }
+            .wallet-info {
+                font-size: 1em;
+                margin: 15px;
+                padding: 8px;
+            }
+            footer {
+                font-size: 0.9em;
+                padding: 8px;
+            }
+        }
+        @media (max-width: 400px) {
+            .token-row {
+                grid-template-columns: 40px 60px 1fr 50px 80px;
+                padding: 6px;
+            }
+            .token-logo {
+                width: 25px;
+                height: 25px;
+            }
+            .add-button {
+                padding: 5px 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Add WoofingJace Token to Wallet</h2>
+    <div class="wallet-info" id="walletInfo">Detecting wallet...</div>
+    <div class="token-list" id="tokenList"></div>
+    <footer>
+        Official Website: <a href="https://woofingjace.com/" target="_blank">woofingjace.com</a>
+    </footer>
+
+    <script>
+        const tokens = [
+            {
+                address: "0xe90e0697c555641d4a90ff2d6ba3ac305d4e4444",
+                symbol: "Jace",
+                decimals: 18,
+                logo: "https://woofingjace.com/images/jace.png"
+            }
+        ];
+
+        // Wallet detection function
+        function detectWallet() {
+            const provider = window.ethereum;
+            if (!provider) {
+                return { name: null, provider: null };
+            }
+
+            if (provider.isMetaMask) {
+                return { name: 'MetaMask', provider };
+            } else if (provider.isOkxWallet) {
+                return { name: 'OKX Wallet', provider };
+            } else if (provider.isTrustWallet) {
+                return { name: 'Trust Wallet', provider };
+            } else if (provider.isCoinbaseWallet) {
+                return { name: 'Coinbase Wallet', provider };
+            } else if (provider.isBitget) {
+                return { name: 'Bitget Wallet', provider };
+            } else if (provider.isRabby) {
+                return { name: 'Rabby Wallet', provider };
+            } else if (window.walletConnect) {
+                return { name: 'WalletConnect', provider: window.walletConnect };
+            } else {
+                return { name: 'Unknown Wallet', provider };
+            }
+        }
+
+        // Update wallet info display
+        function updateWalletInfo() {
+            const walletInfo = document.getElementById('walletInfo');
+            const { name } = detectWallet();
+            if (name) {
+                walletInfo.textContent = `Detected wallet: ${name}`;
+            } else {
+                walletInfo.textContent = 'No wallet detected. Please install a compatible wallet (e.g., MetaMask, OKX Wallet, Trust Wallet).';
+            }
+        }
+
+        // Generate token list
+        function generateTokenList() {
+            const container = document.getElementById('tokenList');
+            const { name } = detectWallet();
+            tokens.forEach(token => {
+                const row = document.createElement('div');
+                row.className = 'token-row';
+                row.innerHTML = `
+                    <img src="${token.logo}" class="token-logo" alt="${token.symbol} logo">
+                    <div class="token-symbol">${token.symbol}</div>
+                    <div class="token-address">${token.address}</div>
+                    <div class="token-decimals">${token.decimals}</div>
+                    <button class="add-button" onclick="addToken('${token.address}', '${token.symbol}', ${token.decimals}, '${token.logo}')">
+                        ${name ? `Add to ${name}` : 'Add to Wallet'}
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Add token to wallet
+        async function addToken(address, symbol, decimals, logo) {
+            const { provider } = detectWallet();
+            if (!provider) {
+                alert('Please install a compatible wallet (e.g., MetaMask, OKX Wallet, Trust Wallet)!');
+                return;
+            }
+
+            try {
+                const bnbChainId = '0x38'; // BNB Chain Mainnet Chain ID
+                const chainId = await provider.request({ method: 'eth_chainId' });
+
+                if (chainId !== bnbChainId) {
+                    alert('Please switch to the BNB Chain network (Chain ID: 56) in your wallet to add this token.\nYou can manually add BNB Chain with the following details:\n- RPC URL: https://bsc-dataseed.binance.org/\n- Chain ID: 56\n- Symbol: BNB\n- Block Explorer: https://bscscan.com');
+                    return;
+                }
+
+                const wasAdded = await provider.request({
+                    method: 'wallet_watchAsset',
+                    params: {
+                        type: 'ERC20',
+                        options: { address, symbol, decimals, image: logo }
+                    }
+                });
+
+                if (wasAdded) {
+                    alert(`${symbol} added to your wallet!`);
+                } else {
+                    alert('User cancelled adding token.');
+                }
+            } catch (error) {
+                console.error('Error adding token:', error);
+                alert('Failed to add token. Please ensure you are on the BNB Chain network and your wallet supports adding tokens.');
+            }
+        }
+
+        // Initialize page
+        updateWalletInfo();
+        generateTokenList();
+    </script>
+</body>
+</html>
